@@ -13,7 +13,7 @@ class Announcer():
         # create the Flask app
         self.config = config
         self.announcer = app = flask.Flask(__name__)
-        self.r = redis.StrictRedis('127.0.0.1', 6379, charset="utf8", decode_responses=True)
+        self.r = redis.StrictRedis(config['redis_host'], config['redis_port'], charset="utf8", decode_responses=True)
         self.p = self.r.pubsub()
 
         @app.route('/query')
