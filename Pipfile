@@ -5,7 +5,8 @@ name = "pypi"
 
 [packages]
 Flask = "*"
-PyPubSub = "*"
+Redis = "*"
+pypubsub = "*"
 
 [dev-packages]
 
