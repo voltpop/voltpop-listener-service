@@ -17,12 +17,12 @@ class Announcer():
         self.p = self.r.pubsub()
 
         @app.route('/query')
-        def query_example(self):
+        def query_example():
             query = flask.request.args.get('query')
             return '''{}'''.format(self.p.get_message())
 
         @app.route('/announce', methods=['POST'])
-        def voltpop_announcement(self):
+        def voltpop_announcement():
             data = flask.request.get_json()
             self.r.publish('ansible', codecs.encode(pickle.dumps(data, 0), 'base64').decode())
             return '{}'.format(codecs.encode(pickle.dumps(data, 0), 'base64').decode())
