@@ -9,11 +9,10 @@ import yaml
 
 class Announcer():
 
-    def __init__(self, config):
+    def __init__(self):
         # create the Flask app
-        self.config = config
         self.announcer = app = flask.Flask(__name__)
-        self.r = redis.StrictRedis(config['redis_host'], config['redis_port'], charset="utf8", decode_responses=True)
+        self.r = redis.StrictRedis(os.environ['VPA_REDIS_HOST'], os.environ['VPA_REDIS_MAP_PORT'], charset="utf8", decode_responses=True)
         self.p = self.r.pubsub()
 
         @app.route('/query')
@@ -28,13 +27,11 @@ class Announcer():
             return '{}'.format(codecs.encode(pickle.dumps(data, 0), 'base64').decode())
 
     def start(self):
-        self.announcer.run(debug=True, port=self.config['webserver_port'])
+        self.announcer.run(debug=True, port=os.environ['VPA_WEBHOST_PORT'])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="VoltPop Redis Webserver")
     parser.add_argument('--debug', action='store_true', default=False)
     
-    if os.path.isfile('announcer.yml'):
-        config = yaml.load(open('announcer.yml', 'r').read(), Loader=yaml.SafeLoader)
-    a = Announcer(config)
+    a = Announcer()
     a.start()

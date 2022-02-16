@@ -4,4 +4,4 @@ services:
   redis:
     image: "redis"
     ports:
-        - "10001:6379"
+        - "${VPA_REDIS_MAP_PORT}:6379"

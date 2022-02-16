@@ -1,4 +1,0 @@
----
-webserver_port: 10000
-redis_host: localhost
-redis_port: 10001
