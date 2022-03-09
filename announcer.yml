@@ -1,0 +1,10 @@
+---
+dbfile: 'vp-anounce.db'
+announce:
+    ansible:
+        enabled: True
+    debug:
+        enabled: True
+query:
+    ansible:
+        enabled: True
