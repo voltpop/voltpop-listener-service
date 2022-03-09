@@ -2,6 +2,8 @@ import argparse
 import codecs
 import datetime
 import flask
+import flask_sqlalchemy
+import flask_login
 import json
 import os
 import pickle
@@ -11,49 +13,60 @@ import sqlite3
 
 class Announcer():
     def __init__(self):
-        # create the Flask app
+        # Init / Configure the Flask app
         self.announcer = app = flask.Flask(__name__)
+        app.config['SQLALCHEMY_DATABASE_URI'] = sqlite:/// + config['dbfile']
+
+        # PubSub configuration
         self.r = redis.StrictRedis(os.environ['VPA_REDIS_HOST'], os.environ['VPA_REDIS_MAP_PORT'], charset="utf8", decode_responses=True)
         self.p = self.r.pubsub()
         self.dbfile = config["dbfile"]
+
         # Initialize the Announcement Stash
         db_con = sqlite3.connect(self.dbfile)
         db = db_con.cursor()
         db.execute("""CREATE TABLE IF NOT EXISTS main.data (
-            datetime TEXT PRIMARY KEY,
+            id INTEGER PRIMARY KEY,
+            datetime TEXT NOT NULL,
             key TEXT NOT NULL,
             payload BLOB NOT NULL);""")
+        db_con.commit()
+        db_con.close()
 
-        @app.route('/query/<key>')
+        @app.route('/query/<key>', methods=["GET"])
         def query_example(key):
-            if key in config['query'].keys():
-                return '''{}'''.format(queryAnnouncement(key))
+            if key in config['announcer'].keys() and config['announcer'][key]["queryable"]:
+                return '''{}'''.format(self.queryAnnouncement(key))
             #query = flask.request.args.get('query')
 
         @app.route('/announce/<key>', methods=['POST'])
         def voltpop_announcement(key):
-            if key in config["announce"].keys():
+            if key in config["announcer"].keys():
                 data = flask.request.get_json()
-                self.stashAnnouncement([datetime.datetime.now().isoformat(), key, data])
+                self.stashAnnouncement([datetime.datetime.now().isoformat(), key, str(data)])
                 self.r.publish('<key>', codecs.encode(pickle.dumps(data, 0), 'base64').decode())
                 return '{}'.format(codecs.encode(pickle.dumps(data, 0), 'base64').decode())
             else:
                 flask.abort(403)
-
+    
     def queryAnnouncement(self, key):
         db_con = sqlite3.connect(self.dbfile)
+        db = db_con.cursor()
+        output = db.execute("SELECT * FROM main.data WHERE key=:rediskey", {"rediskey": key})
+        return(output.fetchall())
 
     def stashAnnouncement(self, values):
         db_con = sqlite3.connect(self.dbfile)
         db = db_con.cursor()
-        print(str(values))
-        db.execute("INSERT INTO main.data VALUES (%s)" %(str(values)))
+        db.execute("INSERT INTO main.data (id, datetime, key, payload) VALUES (NULL, ?, ?, ?)", values)
+        db_con.commit()
+        db_con.close()
 
     def start(self):
         self.announcer.run(debug=True, port=os.environ['VPA_WEBHOST_PORT'])
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="VoltPop Redis Webserver")
+    parser = argparse.ArgumentParser(description="VoltPop Redis PubSub Target")
     parser.add_argument('--debug', action='store_true', default=False)
     config = yaml.load(open("announcer.yml", "r"), Loader=yaml.SafeLoader)
     a = Announcer()

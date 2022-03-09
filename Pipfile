@@ -5,6 +5,8 @@ name = "pypi"
 
 [packages]
 Flask = "*"
+Flask-Login = "*"
+Flask-SQLAlchemy = "*"
 Redis = "*"
 PyYaml = "*"
 

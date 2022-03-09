@@ -1,10 +1,10 @@
 ---
-dbfile: 'vp-anounce.db'
-announce:
+dbfile: 'vp-announce.db'
+announcer:
     ansible:
         enabled: True
+        queryable: True
+        secure: True
     debug:
         enabled: True
-query:
-    ansible:
-        enabled: True
+        queryable: True
