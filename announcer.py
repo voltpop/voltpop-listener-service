@@ -2,8 +2,6 @@ import argparse
 import codecs
 import datetime
 import flask
-import flask_sqlalchemy
-import flask_login
 import json
 import os
 import pickle
@@ -15,8 +13,7 @@ class Announcer():
     def __init__(self):
         # Init / Configure the Flask app
         self.announcer = app = flask.Flask(__name__)
-        app.config['SQLALCHEMY_DATABASE_URI'] = sqlite:/// + config['dbfile']
-
+        
         # PubSub configuration
         self.r = redis.StrictRedis(os.environ['VPA_REDIS_HOST'], os.environ['VPA_REDIS_MAP_PORT'], charset="utf8", decode_responses=True)
         self.p = self.r.pubsub()
@@ -25,6 +22,7 @@ class Announcer():
         # Initialize the Announcement Stash
         db_con = sqlite3.connect(self.dbfile)
         db = db_con.cursor()
+
         db.execute("""CREATE TABLE IF NOT EXISTS main.data (
             id INTEGER PRIMARY KEY,
             datetime TEXT NOT NULL,
@@ -42,13 +40,25 @@ class Announcer():
         @app.route('/announce/<key>', methods=['POST'])
         def voltpop_announcement(key):
             if key in config["announcer"].keys():
-                data = flask.request.get_json()
-                self.stashAnnouncement([datetime.datetime.now().isoformat(), key, str(data)])
-                self.r.publish('<key>', codecs.encode(pickle.dumps(data, 0), 'base64').decode())
-                return '{}'.format(codecs.encode(pickle.dumps(data, 0), 'base64').decode())
+                q = config['announcer'][key]
+                nike = True
+                if q['security'] and q['secure_token'] is not None:
+                    if q['secure_token'] == flask.request.headers.get('SecureToken'):
+                        nike = True
+                    else:
+                        nike = False
+                elif q['security'] and not q['secure_token']:
+                    # Misconfiguration, oops!
+                    flask.abort(501)
+                
+                if nike:
+                    data = flask.request.get_json()
+                    self.stashAnnouncement([datetime.datetime.now().isoformat(), key, str(data)])
+                    self.r.publish(key, codecs.encode(pickle.dumps(data, 0), 'base64').decode())
+                    return '{}'.format(codecs.encode(pickle.dumps(data, 0), 'base64').decode())
             else:
                 flask.abort(403)
-    
+
     def queryAnnouncement(self, key):
         db_con = sqlite3.connect(self.dbfile)
         db = db_con.cursor()
