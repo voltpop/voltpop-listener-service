@@ -42,12 +42,12 @@ class Announcer():
             if key in config["announcer"].keys():
                 q = config['announcer'][key]
                 nike = True
-                if q['security'] and q['secure_token'] is not None:
-                    if q['secure_token'] == flask.request.headers.get('SecureToken'):
+                if q['security'] and q['token_string'] is not None:
+                    if q['token_string'] == flask.request.headers.get('SecureToken'):
                         nike = True
                     else:
                         nike = False
-                elif q['security'] and not q['secure_token']:
+                elif q['security'] and not q['token_string']:
                     # Misconfiguration, oops!
                     flask.abort(501)
                 

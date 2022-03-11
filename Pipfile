@@ -9,7 +9,7 @@ Flask-Login = "*"
 Flask-SQLAlchemy = "*"
 Redis = "*"
 PyYaml = "*"
-
+AIOHttp = "*"
 [dev-packages]
 
 [requires]

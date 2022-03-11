@@ -5,7 +5,7 @@ announcer:
         enabled: True
         queryable: True
         security: False
-        secure_token: "TESTTOKEN"
+        token_string: "TESTTOKEN"
     debug:
         enabled: True
         queryable: True
