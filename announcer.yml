@@ -4,7 +4,7 @@ announcer:
     ansible:
         enabled: True
         queryable: True
-        security: False
+        security: True
         secure_token: "TESTTOKEN"
     debug:
         enabled: True

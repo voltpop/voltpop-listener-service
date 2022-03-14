@@ -5,8 +5,9 @@ After=network.target
 [Service]
 Type=simple
 Restart=always
-WorkingDirectory=/opt/vp-announce
-ExecStart=/usr/local/bin/pipenv run python3 announce.py
+RestartSec=5
+WorkingDirectory=/opt/vp-announce/
+ExecStart=/usr/bin/pipenv run python3 announcer.py
 
 [Install]
 WantedBy=multi-user.target

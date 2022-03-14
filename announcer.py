@@ -2,12 +2,17 @@ import argparse
 import codecs
 import datetime
 import flask
+import hashlib
+import hmac
 import json
 import os
 import pickle
 import redis
 import yaml
 import sqlite3
+import pprint
+
+pp = pprint.PrettyPrinter()
 
 class Announcer():
     def __init__(self):
@@ -44,13 +49,19 @@ class Announcer():
                 nike = True
                 if q['security'] and q['secure_token'] is not None:
                     if q['secure_token'] == flask.request.headers.get('SecureToken'):
+                        print("token secured via header")
+                        nike = True
+                    elif self.verifyGHSignature(q['secure_token'], flask.request):
+                        print("GitHub Signature verified")
                         nike = True
                     else:
+                        print("Validation Failed!")
                         nike = False
                 elif q['security'] and not q['secure_token']:
                     # Misconfiguration, oops!
                     flask.abort(501)
-                
+                elif not q['security']:
+                    print("Security disabled")
                 if nike:
                     data = flask.request.get_json()
                     self.stashAnnouncement([datetime.datetime.now().isoformat(), key, str(data)])
@@ -72,12 +83,21 @@ class Announcer():
         db_con.commit()
         db_con.close()
 
-    def start(self):
-        self.announcer.run(debug=True, port=os.environ['VPA_WEBHOST_PORT'])
+    def verifyGHSignature(self, token, request):
+        signature = "sha256="+hmac.new(
+            bytes(token , 'utf-8'), 
+            msg = request.data, 
+            digestmod = hashlib.sha256
+            ).hexdigest().lower()
+        return hmac.compare_digest(signature, request.headers['X-Hub-Signature-256'])
+
+    def start(self, debugt):
+        self.announcer.run(debug=debugt, port=os.environ['VPA_WEBHOST_PORT'])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="VoltPop Redis PubSub Target")
     parser.add_argument('--debug', action='store_true', default=False)
+    args = parser.parse_args()
     config = yaml.load(open("announcer.yml", "r"), Loader=yaml.SafeLoader)
     a = Announcer()
-    a.start()
+    a.start(args.debug)
