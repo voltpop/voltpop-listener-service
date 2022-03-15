@@ -59,8 +59,8 @@ class Announcer():
 
                 data = flask.request.get_json()
                 self.stashAnnouncement([datetime.datetime.now().isoformat(), key, str(data)])
-                self.r.publish(key, codecs.encode(pickle.dumps(data, 0), 'base64').decode())
-                return '{}'.format(codecs.encode(pickle.dumps(data, 0), 'base64').decode())
+                self.r.publish(key, codecs.encode(pickle.dumps(data, 0), 'base64'))
+                return '{}'.format(codecs.encode(pickle.dumps(data, 0), 'base64'))
 
             else:
                 flask.abort(403)
