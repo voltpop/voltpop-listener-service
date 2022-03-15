@@ -46,27 +46,22 @@ class Announcer():
         def voltpop_announcement(key):
             if key in config["announcer"].keys():
                 q = config['announcer'][key]
-                nike = True
+
+                # Security!!!
                 if q['security'] and q['secure_token'] is not None:
                     if q['secure_token'] == flask.request.headers.get('SecureToken'):
                         print("token secured via header")
-                        nike = True
                     elif self.verifyGHSignature(q['secure_token'], flask.request):
                         print("GitHub Signature verified")
-                        nike = True
                     else:
                         print("Validation Failed!")
-                        nike = False
-                elif q['security'] and not q['secure_token']:
-                    # Misconfiguration, oops!
-                    flask.abort(501)
-                elif not q['security']:
-                    print("Security disabled")
-                if nike:
-                    data = flask.request.get_json()
-                    self.stashAnnouncement([datetime.datetime.now().isoformat(), key, str(data)])
-                    self.r.publish(key, codecs.encode(pickle.dumps(data, 0), 'base64').decode())
-                    return '{}'.format(codecs.encode(pickle.dumps(data, 0), 'base64').decode())
+                        flask.abort(403)
+
+                data = flask.request.get_json()
+                self.stashAnnouncement([datetime.datetime.now().isoformat(), key, str(data)])
+                self.r.publish(key, codecs.encode(pickle.dumps(data, 0), 'base64').decode())
+                return '{}'.format(codecs.encode(pickle.dumps(data, 0), 'base64').decode())
+
             else:
                 flask.abort(403)
 
