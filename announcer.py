@@ -20,7 +20,7 @@ class Announcer():
         self.announcer = app = flask.Flask(__name__)
         
         # PubSub configuration
-        self.r = redis.StrictRedis(os.environ['VPA_REDIS_HOST'], os.environ['VPA_REDIS_MAP_PORT'], charset="utf8", decode_responses=True)
+        self.r = redis.StrictRedis(os.environ['VPA_REDIS_HOST'], os.environ['VPA_REDIS_MAP_PORT'], charset="utf8", decode_responses=True, socket_keepalive=True, socket_timeout=300)
         self.p = self.r.pubsub()
         self.dbfile = config["dbfile"]
 
