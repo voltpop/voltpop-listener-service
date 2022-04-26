@@ -69,7 +69,7 @@ class Announcer():
         db_con = sqlite3.connect(self.dbfile)
         db = db_con.cursor()
         output = db.execute("SELECT * FROM main.data WHERE key=:rediskey", {"rediskey": key})
-        return(json.dump(output.fetchall()))
+        return(json.dumps(output.fetchall()))
 
     def stashAnnouncement(self, values):
         db_con = sqlite3.connect(self.dbfile)
