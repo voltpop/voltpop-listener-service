@@ -17,7 +17,7 @@ pp = pprint.PrettyPrinter()
 class Announcer():
     def __init__(self):
         # Init / Configure the Flask app
-        self.announcer = app = flask.Flask(__name__, template_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), "site"))
+        self.announcer = app = flask.Flask(__name__, template_folder=os.path.join(os.path.dirname(os.path.realpath(__file__)), "site"))
         
         # PubSub configuration
         self.r = redis.StrictRedis(os.environ['VPA_REDIS_HOST'], os.environ['VPA_REDIS_MAP_PORT'], charset="utf8", decode_responses=True, socket_keepalive=True, socket_timeout=300)
