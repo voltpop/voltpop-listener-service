@@ -37,7 +37,7 @@ class Announcer():
         db_con.close()
         @app.route('/', methods=["GET"])
         def index():
-            return render_template('site/index.html')
+            return flask.render_template('site/index.html')
 
         @app.route('/query/<key>', methods=["GET"])
         def query_example(key):
