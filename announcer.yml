@@ -9,4 +9,3 @@ announcer:
     debug:
         enabled: True
         queryable: True
-

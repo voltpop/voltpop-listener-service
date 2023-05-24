@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <link rel="stylesheet" href="css/main.scss">
+ <link rel="stylesheet" href="css/toolbar.scss">
+ <h3>Welcome to Voltpop Announce</h3>
+  <ul>
+    <li style="float:right"><a class="active" href="add_channel">New Channel</a></li>
+    <li style="float:right"><a class="active" href="query_channel">Queue Logs</a></li>
+    <li style="float:right"><a class="active" href="index">Home</a></li>
+  </ul> 
+</head>
+<body>
+  <?php
+    echo readfile("/home/dfoulks/Projects/voltpop/vp-announce/announcer.yml");
+  ?>
+</body>
+</html>

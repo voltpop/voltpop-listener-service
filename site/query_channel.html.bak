@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="css/main.scss">
+    <link rel="stylesheet" href="css/toolbar.scss">
+</head>
+<head>
+ <h3>Welcome to Voltpop Announce</h3>
+  <ul>
+    <li style="float:right"><a class="active" href="add_channel">New Channel</a></li>
+    <li style="float:right"><a class="active" href="query_channel">Queue Logs</a></li>
+    <li style="float:right"><a class="active" href="index">Home</a></li>
+  </ul> 
+</head>
+<body>
+  <?php
+    $channels = file_get_contents('/home/dfoulks/Projects/voltpop/vp-announce/announce.yml');
+    echo $channels;
+  ?>
+<!--
+      <form action="query_channel.php" method="get">
+    <label for="channel_key">Channel Key</label>
+    <select id="channel_key" name="key">
+      <option selected="selected">Channel Key</option>
+    <input type="submit" value="Submit">
+  </form>
+-->
+
+</body>
+</html>
