@@ -17,7 +17,7 @@ pp = pprint.PrettyPrinter()
 class Announcer():
     def __init__(self):
         # Init / Configure the Flask app
-        self.announcer = app = flask.Flask(__name__)
+        self.announcer = app = flask.Flask(__name__, template_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), "site"))
         
         # PubSub configuration
         self.r = redis.StrictRedis(os.environ['VPA_REDIS_HOST'], os.environ['VPA_REDIS_MAP_PORT'], charset="utf8", decode_responses=True, socket_keepalive=True, socket_timeout=300)
@@ -37,7 +37,7 @@ class Announcer():
         db_con.close()
         @app.route('/', methods=["GET"])
         def index():
-            return flask.render_template(os.path.join(os.path.abspath(__file__),'site/index.html'))
+            return flask.render_template('index.html')
 
         @app.route('/query/<key>', methods=["GET"])
         def query_example(key):
