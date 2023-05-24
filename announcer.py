@@ -35,6 +35,9 @@ class Announcer():
             payload BLOB NOT NULL);""")
         db_con.commit()
         db_con.close()
+        @app.route('/', methods=["GET"])
+        def index()
+            return render_template('site/main.html')
 
         @app.route('/query/<key>', methods=["GET"])
         def query_example(key):
