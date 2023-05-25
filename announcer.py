@@ -17,11 +17,13 @@ pp = pprint.PrettyPrinter()
 class Announcer():
     def __init__(self):
         # Init / Configure the Flask app
+        template_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), "app/templates")
+        static_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), "app/static")
+        self.toolbar=open(os.path.join(template_path, "toolbar.html"), "r").read()
         self.announcer = app = flask.Flask(__name__, 
-                static_folder=os.path.join(os.path.dirname(os.path.realpath(__file__)), "app/static"),
-                template_folder=os.path.join(os.path.dirname(os.path.realpath(__file__)), "app/templates"),
+                static_folder=static_path,
+                template_folder=template_path,
                 )
-        
         # PubSub configuration
         self.r = redis.StrictRedis(os.environ['VPA_REDIS_HOST'], os.environ['VPA_REDIS_MAP_PORT'], charset="utf8", decode_responses=True, socket_keepalive=True, socket_timeout=300)
         self.p = self.r.pubsub()
@@ -47,62 +49,99 @@ class Announcer():
        
         @app.route('/', methods=["GET"])
         def index():
-            return flask.render_template('index.html')
+            return flask.render_template('index.html', toolbar=self.toolbar)
 
         @app.route('/add_channel', methods=["GET", "POST"])
         def add_channel():
+            channels = [ channel[1] for channel in self.fetchChannels() ]
             if flask.request.method == "POST":
+                # Collect Channel details from the form
+                values = [ flask.request.form.get("key") ]
+                if flask.request.form.get("security"): values.append(True)
+                else: values.append(False)
 
-                values = [
-                        flask.request.form.get("key"),
-                        ]
-                if flask.request.form.get("security"):
-                    values.append(True)
+                if flask.request.form.get("enabled"): values.append(True)
+                else: values.append(False)
+
+                if flask.request.form.get("queryable"): values.append(True)
+                else: values.append(False)
+
+                if values[0] in channels:
+                    error_msg = "%s is already a channel" % (values[0])
+                    return flask.render_template('add_channel.html', toolbar=self.toolbar, error_msg=error_msg)
                 else:
-                    values.append(False)
-
-                if flask.request.form.get("enabled"):
-                    values.append(True)
-                else:
-                    values.append(False)
-
-                if flask.request.form.get("queryable"):
-                    values.append(True)
-                else:
-                    values.append(False)
-
-                self.addChannel(values)
-            return flask.render_template('add_channel.html')
+                    self.addChannel(values)
+            return flask.render_template('add_channel.html', toolbar=self.toolbar, error_msg="")
 
         @app.route('/query_channel', methods=["GET", "POST"])
         def query_channel():
-            data = {}
+            data = "{}"
+            key = flask.request.form.get("key")
             if flask.request.method == "POST":
-                data = self.queryAnnouncement(flask.request.form.get("key"))
-            print(data)
+                data = self.queryAnnouncement(key)
             channels = [ key[1] for key in self.fetchChannels() ]
-            return flask.render_template('query_channel.html', channels=channels, data=data)
+            return flask.render_template('query_channel.html', toolbar=self.toolbar, channels=channels, data=json.loads(data))
 
         @app.route('/query/<key>', methods=["GET"])
         def query_example(key):
-            if key in config['announcer'].keys() and config['announcer'][key]["queryable"]:
+            channels = self.fetchChannels()
+            q_reference = {}
+            for channel in channels:
+                q_reference[channel[1]] = {
+                        "security": channel[2],
+                        "enabled": channel[3],
+                        "queryable": channel[4],
+                        }
+            print(q_reference)
+            if key in q_reference.keys() and q_reference[key]["queryable"] == 0:
                 return '''{}'''.format(self.queryAnnouncement(key))
+            else:
+                flask.abort(403)
             #query = flask.request.args.get('query')
+
+        @app.route('/new_announcement', methods=['GET', 'POST'])
+        def new_announcement():
+            status = ""
+            channels = self.fetchChannels()
+            q_reference = {}
+            for channel in channels:
+                q_reference[channel[1]] = {
+                        "security": channel[2],
+                        "enabled": channel[3],
+                        "queryable": channel[4],
+                        }
+
+            data = "{}"
+            if flask.request.method == "POST":
+                key = flask.request.form.get("key")
+                data = flask.request.form.get("data")
+                print(key, data)
+                self.stashAnnouncement([datetime.datetime.now().isoformat(), key, str(data)])
+                self.r.publish(key, codecs.encode(pickle.dumps(data, 0), 'base64'))
+                status = "Message Sent!"
+            return flask.render_template('new_announcement.html', toolbar=self.toolbar, channels=q_reference.keys(), status=status)
 
         @app.route('/announce/<key>', methods=['POST'])
         def voltpop_announcement(key):
             channels = self.fetchChannels()
-            if key in config["announcer"].keys():
-                q = config['announcer'][key]
+            q_reference = {}
+            for channel in channels:
+                q_reference[channel[1]] = {
+                        "security": channel[2],
+                        "enabled": channel[3],
+                        "queryable": channel[4],
+                        }
+            if key in q_reference.keys():
+                q = q_reference[key]
                 # Security!!!
-                if q['security'] and q['secure_token'] is not None:
-                    if q['secure_token'] == flask.request.headers.get('SecureToken'):
-                        print("token secured via header")
-                    elif self.verifyGHSignature(q['secure_token'], flask.request):
-                        print("GitHub Signature verified")
-                    else:
-                        print("Validation Failed!")
-                        flask.abort(403)
+#                if q['security'] and q['secure_token'] is not None:
+#                    if q['secure_token'] == flask.request.headers.get('SecureToken'):
+#                        print("token secured via header")
+#                    elif self.verifyGHSignature(q['secure_token'], flask.request):
+#                        print("GitHub Signature verified")
+#                    else:
+#                        print("Validation Failed!")
+#                        flask.abort(403)
 
                 data = flask.request.get_json()
                 self.stashAnnouncement([datetime.datetime.now().isoformat(), key, str(data)])
