@@ -46,7 +46,7 @@ class Announcer():
             payload BLOB NOT NULL);""")
         db_con.commit()
         db_con.close()
-       
+        
         @app.route('/', methods=["GET"])
         def index():
             channels = self.fetchChannels()
@@ -128,7 +128,6 @@ class Announcer():
                 data = flask.request.form.get("data")
                 q = q_reference[key]
                 if key != "Channel Key" and q["enabled"]:
-#                    if q['security'] and q['secure_token'] is not None:
                     if not q['security']:
                         self.stashAnnouncement([datetime.datetime.now().isoformat(), key, str(data)])
                         self.r.publish(key, codecs.encode(pickle.dumps(data, 0), 'base64'))
