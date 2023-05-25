@@ -17,7 +17,10 @@ pp = pprint.PrettyPrinter()
 class Announcer():
     def __init__(self):
         # Init / Configure the Flask app
-        self.announcer = app = flask.Flask(__name__, static_folder=os.path.join(os.path.dirname(os.path.realpath(__file__)), "app/static"))
+        self.announcer = app = flask.Flask(__name__, 
+                static_folder=os.path.join(os.path.dirname(os.path.realpath(__file__)), "app/static"),
+                template_folder=os.path.join(os.path.dirname(os.path.realpath(__file__)), "app/templates"),
+                )
         
         # PubSub configuration
         self.r = redis.StrictRedis(os.environ['VPA_REDIS_HOST'], os.environ['VPA_REDIS_MAP_PORT'], charset="utf8", decode_responses=True, socket_keepalive=True, socket_timeout=300)
@@ -27,6 +30,12 @@ class Announcer():
         # Initialize the Announcement Stash
         db_con = sqlite3.connect(self.dbfile)
         db = db_con.cursor()
+        db.execute("""CREATE TABLE IF NOT EXISTS main.channels (
+            id INTEGER PRIMARY KEY,
+            key TEXT NOT NULL,
+            security BOOL NOT NULL,
+            enabled BOOL NOT NULL,
+            queryable BOOL NOT NULL);""")
 
         db.execute("""CREATE TABLE IF NOT EXISTS main.data (
             id INTEGER PRIMARY KEY,
@@ -35,9 +44,44 @@ class Announcer():
             payload BLOB NOT NULL);""")
         db_con.commit()
         db_con.close()
+       
         @app.route('/', methods=["GET"])
         def index():
             return flask.render_template('index.html')
+
+        @app.route('/add_channel', methods=["GET", "POST"])
+        def add_channel():
+            if flask.request.method == "POST":
+
+                values = [
+                        flask.request.form.get("key"),
+                        ]
+                if flask.request.form.get("security"):
+                    values.append(True)
+                else:
+                    values.append(False)
+
+                if flask.request.form.get("enabled"):
+                    values.append(True)
+                else:
+                    values.append(False)
+
+                if flask.request.form.get("queryable"):
+                    values.append(True)
+                else:
+                    values.append(False)
+
+                self.addChannel(values)
+            return flask.render_template('add_channel.html')
+
+        @app.route('/query_channel', methods=["GET", "POST"])
+        def query_channel():
+            data = {}
+            if flask.request.method == "POST":
+                data = self.queryAnnouncement(flask.request.form.get("key"))
+            print(data)
+            channels = [ key[1] for key in self.fetchChannels() ]
+            return flask.render_template('query_channel.html', channels=channels, data=data)
 
         @app.route('/query/<key>', methods=["GET"])
         def query_example(key):
@@ -47,9 +91,9 @@ class Announcer():
 
         @app.route('/announce/<key>', methods=['POST'])
         def voltpop_announcement(key):
+            channels = self.fetchChannels()
             if key in config["announcer"].keys():
                 q = config['announcer'][key]
-
                 # Security!!!
                 if q['security'] and q['secure_token'] is not None:
                     if q['secure_token'] == flask.request.headers.get('SecureToken'):
@@ -67,6 +111,19 @@ class Announcer():
 
             else:
                 flask.abort(403)
+
+    def addChannel(self, values):
+        db_con = sqlite3.connect(self.dbfile)
+        db = db_con.cursor()
+        output = db.execute("INSERT INTO main.channels (id, key, security, enabled, queryable) VALUES (NULL, ?, ?, ?, ?)", values)
+        db_con.commit()
+        db_con.close
+
+    def fetchChannels(self):
+        db_con = sqlite3.connect(self.dbfile)
+        db = db_con.cursor()
+        output = db.execute("SELECT * FROM main.channels")
+        return (output.fetchall())
 
     def queryAnnouncement(self, key):
         db_con = sqlite3.connect(self.dbfile)

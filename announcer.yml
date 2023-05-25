@@ -1,11 +1,2 @@
 ---
 dbfile: 'vp-announce.db'
-announcer:
-    ansible:
-        enabled: True
-        queryable: True
-        security: True
-        secure_token: "TESTTOKEN"
-    debug:
-        enabled: True
-        queryable: True
