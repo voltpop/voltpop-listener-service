@@ -3,6 +3,7 @@
 <head>
     <link rel="stylesheet" href="/static/main.css">
     <link rel="stylesheet" href="/static/toolbar.css">
+    <link rel="stylesheet" href="/static/table.css">
 </head>
 <head>
  {{ toolbar|safe }}
@@ -14,5 +15,23 @@
     <div>
       DOCUMENTATION GOES HERE
     </div>
+    <div>
+      <table>
+	<tr>
+  	  <th>Channel ID</th>
+  	  <th>Channel Name</th>
+  	  <th>Secured</th>
+  	  <th>Enabled</th>
+  	  <th>Queryable</th>
+	</tr>
+	{% for channel in channels %}
+	<tr>
+	  <td>{{ channel[0] }}</td>
+	  <td>{{ channel[1] }}</td>
+	  <td>{% if channel[2] == 0 %}False{% else %}True{% endif %}</td>
+	  <td>{% if channel[3] == 0 %}False{% else %}True{% endif %}</td>
+	  <td>{% if channel[4] == 0 %}False{% else %}True{% endif %}</td>
+	</tr>
+	{% endfor %}
   </body>
 </html>

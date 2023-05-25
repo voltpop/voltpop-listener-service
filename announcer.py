@@ -49,7 +49,8 @@ class Announcer():
        
         @app.route('/', methods=["GET"])
         def index():
-            return flask.render_template('index.html', toolbar=self.toolbar)
+            channels = self.fetchChannels()
+            return flask.render_template('index.html', toolbar=self.toolbar, channels=channels)
 
         @app.route('/add_channel', methods=["GET", "POST"])
         def add_channel():
@@ -70,7 +71,9 @@ class Announcer():
                     error_msg = "%s is already a channel" % (values[0])
                     return flask.render_template('add_channel.html', toolbar=self.toolbar, error_msg=error_msg)
                 else:
+                    error_msg = "Added %s!" % (values[0])
                     self.addChannel(values)
+                    return flask.render_template('add_channel.html', toolbar=self.toolbar, error_msg=error_msg)
             return flask.render_template('add_channel.html', toolbar=self.toolbar, error_msg="")
 
         @app.route('/query_channel', methods=["GET", "POST"])
