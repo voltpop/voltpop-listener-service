@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/main.css">
+    <link rel="stylesheet" href="/static/toolbar.css">
+    <link rel="stylesheet" href="/static/table.css">
+</head>
+<head>
+ {{ toolbar|safe }}
+</head>
+<body>
+  <div>
+    <form action={{ url_for("new_announcement") }} method="post">
+    <label for="channel_key">Channel Key</label>
+    <select id="channel_key" name="key">
+      <option selected="selected">Channel Key</option>
+      {% for key in channels %}<option>{{ key }}</option>
+      {% endfor %}
+    <div style="width 20%; float: left;"></div>
+    <div style="width 80%; float: left;">
+    <textarea name="data" style="width: 100%; max-width: 100%;" rows="20">Announcing...</textarea>
+    </div>
+    <div style="clear: both;"></div>
+    <input type="submit" value="Submit">
+    </form>
+  </div>
+  <div>{{ status }}</div>
+</body>
+</html>
