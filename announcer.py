@@ -87,9 +87,10 @@ class Announcer():
                         "queryable": channel[4],
                         }
             data = "{}"
-            key = flask.request.form.get("key")
-            if flask.request.method == "POST" and q_reference[key]["queryable"]: 
-                data = self.queryAnnouncement(key)
+            if flask.request.method == "POST": 
+                key = flask.request.form.get("key")
+                if key != "Channel Key" and q_reference[key]["queryable"]:
+                    data = self.queryAnnouncement(key)
             channels = [ key[1] for key in self.fetchChannels() ]
             return flask.render_template('query_channel.html', toolbar=self.toolbar, channels=channels, data=json.loads(data))
 
@@ -122,12 +123,16 @@ class Announcer():
                         }
 
             data = "{}"
-            if flask.request.method == "POST" and q_reference[key]["enabled"]:
+            if flask.request.method == "POST":
                 key = flask.request.form.get("key")
                 data = flask.request.form.get("data")
-                self.stashAnnouncement([datetime.datetime.now().isoformat(), key, str(data)])
-                self.r.publish(key, codecs.encode(pickle.dumps(data, 0), 'base64'))
-                status = "Message Sent!"
+                q = q_reference[key]
+                if key != "Channel Key" and q["enabled"]:
+#                    if q['security'] and q['secure_token'] is not None:
+                    if not q['security']:
+                        self.stashAnnouncement([datetime.datetime.now().isoformat(), key, str(data)])
+                        self.r.publish(key, codecs.encode(pickle.dumps(data, 0), 'base64'))
+                        status = "Message Sent!"
             return flask.render_template('new_announcement.html', toolbar=self.toolbar, channels=q_reference.keys(), status=status)
 
         @app.route('/announce/<key>', methods=['POST'])
