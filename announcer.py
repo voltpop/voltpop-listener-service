@@ -78,9 +78,17 @@ class Announcer():
 
         @app.route('/query_channel', methods=["GET", "POST"])
         def query_channel():
+            channels = self.fetchChannels()
+            q_reference = {}
+            for channel in channels:
+                q_reference[channel[1]] = {
+                        "security": channel[2],
+                        "enabled": channel[3],
+                        "queryable": channel[4],
+                        }
             data = "{}"
             key = flask.request.form.get("key")
-            if flask.request.method == "POST":
+            if flask.request.method == "POST" and q_reference[key]["queryable"]: 
                 data = self.queryAnnouncement(key)
             channels = [ key[1] for key in self.fetchChannels() ]
             return flask.render_template('query_channel.html', toolbar=self.toolbar, channels=channels, data=json.loads(data))
@@ -95,8 +103,7 @@ class Announcer():
                         "enabled": channel[3],
                         "queryable": channel[4],
                         }
-            print(q_reference)
-            if key in q_reference.keys() and q_reference[key]["queryable"] == 0:
+            if key in q_reference.keys() and q_reference[key]["queryable"]:
                 return '''{}'''.format(self.queryAnnouncement(key))
             else:
                 flask.abort(403)
@@ -115,10 +122,9 @@ class Announcer():
                         }
 
             data = "{}"
-            if flask.request.method == "POST":
+            if flask.request.method == "POST" and q_reference[key]["enabled"]:
                 key = flask.request.form.get("key")
                 data = flask.request.form.get("data")
-                print(key, data)
                 self.stashAnnouncement([datetime.datetime.now().isoformat(), key, str(data)])
                 self.r.publish(key, codecs.encode(pickle.dumps(data, 0), 'base64'))
                 status = "Message Sent!"
@@ -134,7 +140,7 @@ class Announcer():
                         "enabled": channel[3],
                         "queryable": channel[4],
                         }
-            if key in q_reference.keys():
+            if key in q_reference.keys() and q_reference[key]["enabled"]:
                 q = q_reference[key]
                 # Security!!!
 #                if q['security'] and q['secure_token'] is not None:
