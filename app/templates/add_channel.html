@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/main.css">
+    <link rel="stylesheet" href="/static/toolbar.css">
+</head>
+<head>
+ <h3>Welcome to Voltpop Announce</h3>
+  <ul>
+    <li style="float:right"><a class="active" href="/add_channel">New Channel</a></li> 
+    <li style="float:right"><a class="active" href="/query_channel">Queue Logs</a></li> 
+    <li style="float:right"><a class="active" href="/">Home</a></li> 
+  </ul> 
+</head>
+<body>
+<div>
+    <form action="{{ url_for("add_channel") }}" method="post">
+    <label for="channel_key">Channel Key</label>
+    <input type="text" id="channel_key" name="key" placeholder="Channel Key..">
+    Security: <input type="checkbox" id="security" name="secured">
+    Enabled: <input type="checkbox" id="enabled" name="enabled">
+    Queryable: <input type="checkbox" id="queryable" name="queryable">
+    <input type="submit" value="Submit">
+  </form>
+</div>
+</body>
+</html>
